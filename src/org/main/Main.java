@@ -15,7 +15,7 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.nio.FloatBuffer;
 
-import org.engine.Model;
+//import org.engine.Model;
 import org.engine.Shader;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -188,8 +188,34 @@ public class Main {
 		
 		Shader containerShaderProgram = new Shader("Shaders/container.vs", "Shaders/container.fs");
 		Shader lampShaderProgram = new Shader("Shaders/lamp.vs", "Shaders/lamp.fs");
-		Model container = new Model(vertices, 2);
-		Model lamp = new Model(vertices, 1);
+		
+		int vbo, containerVAO;
+		containerVAO = glGenVertexArrays();
+		vbo = glGenBuffers();
+		
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+		
+		glBindVertexArray(containerVAO);
+		
+	    glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * 4, 0);
+	    glEnableVertexAttribArray(0);
+	    
+	    glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * 4, 3*4);
+	    glEnableVertexAttribArray(1);
+	    glBindVertexArray(0);
+	    
+	    int lightVAO;
+	    lightVAO = glGenVertexArrays();
+	    glBindVertexArray(lightVAO);
+	    
+	    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	    
+	    glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * 4, 0);
+	    glEnableVertexAttribArray(0);
+	    
+	    glBindVertexArray(0);
+	    
 		
 		while ( !glfwWindowShouldClose(window) ) {
 			float currentFrame = (float) glfwGetTime();
@@ -205,11 +231,13 @@ public class Main {
 			// *************************Container Drawing*************************
 			containerShaderProgram.use();
 			int objectColorLoc = glGetUniformLocation(containerShaderProgram.getProgramID(), "objectColor");
-			int lightColorLoc = glGetUniformLocation(containerShaderProgram.getProgramID(), "lightColor");
+			int lightColorLoc  = glGetUniformLocation(containerShaderProgram.getProgramID(), "lightColor");
 			int lightPosLoc    = glGetUniformLocation(containerShaderProgram.getProgramID(), "lightPos");
+			int viewPosLoc     = glGetUniformLocation(containerShaderProgram.getProgramID(), "viewPos");
 	        glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
 	        glUniform3f(lightColorLoc,  1.0f, 0.5f, 1.0f);
 	        glUniform3f(lightPosLoc,    lightPos.x, lightPos.y, lightPos.z);
+	        glUniform3f(viewPosLoc,     eye.x, eye.y, eye.z);
 			
 	        FloatBuffer fb = BufferUtils.createFloatBuffer(16);
 	        
@@ -225,7 +253,8 @@ public class Main {
 			projection.get(fb);
 			glUniformMatrix4fv(projectionLoc, false, fb);
 			
-			container.bind();
+			//container.bind();
+			glBindVertexArray(containerVAO);
 			
 			Matrix4f model = new Matrix4f();
 			int modelLoc = glGetUniformLocation(containerShaderProgram.getProgramID(), "model");
@@ -257,7 +286,8 @@ public class Main {
 	        model.get(fb);
 	        glUniformMatrix4fv(modelLoc, false, fb);
 	        
-	        lamp.bind();
+	        //lamp.bind();
+	        glBindVertexArray(lightVAO);
 	        glDrawArrays(GL_TRIANGLES, 0, 36);
 	        glBindVertexArray(0);
 	        
